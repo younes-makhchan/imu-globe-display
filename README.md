@@ -40,6 +40,10 @@ pio run --target upload
 pio device monitor
 ```
 
+PlatformIO installs `MPU6050_light`, Adafruit PWM Servo Driver, Adafruit BusIO,
+and ArduinoJson automatically. `Wire` and the ESP32 BLE headers are supplied by
+the Arduino ESP32 framework.
+
 If your board is not a standard ESP32 development board, change `board` in
 `platformio.ini` to its PlatformIO board identifier. The firmware advertises
 as `Globe MPU6050` at 115200 baud.
