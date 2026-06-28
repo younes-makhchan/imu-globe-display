@@ -3,14 +3,15 @@
 #include <BLEDevice.h>
 #include <BLEServer.h>
 #include <BLEUtils.h>
+#include <MPU6050_light.h>
 #include <Wire.h>
 
 namespace {
-constexpr uint8_t MPU6050_ADDRESS = 0x68;
-constexpr uint8_t MPU6050_PWR_MGMT_1 = 0x6B;
-constexpr uint8_t MPU6050_ACCEL_XOUT_H = 0x3B;
 constexpr int I2C_SDA_PIN = 21;
 constexpr int I2C_SCL_PIN = 22;
+constexpr uint32_t I2C_CLOCK_HZ = 400000;
+constexpr float ACCEL_RAW_SCALE = 16384.0F;  // ±2 g, matching the old BLE payload.
+constexpr float GYRO_RAW_SCALE = 131.0F;     // ±250°/s, matching the old BLE payload.
 
 constexpr char DEVICE_NAME[] = "Globe MPU6050";
 constexpr char SERVICE_UUID[] = "7f2a0001-5c8d-4b5f-8d71-12a56f5b9c10";
@@ -18,6 +19,8 @@ constexpr char RAW_CHARACTERISTIC_UUID[] = "7f2a0002-5c8d-4b5f-8d71-12a56f5b9c10
 
 BLECharacteristic *rawCharacteristic = nullptr;
 volatile bool deviceConnected = false;
+MPU6050 mpu(Wire);
+bool mpuReady = false;
 
 struct RawMpuData {
   int16_t ax;
@@ -39,32 +42,26 @@ class GlobeServerCallbacks : public BLEServerCallbacks {
   }
 };
 
-int16_t readInt16() {
-  const uint8_t highByte = Wire.read();
-  const uint8_t lowByte = Wire.read();
-  return static_cast<int16_t>((highByte << 8) | lowByte);
+int16_t clampToInt16(float value) {
+  if (value > 32767.0F) {
+    return 32767;
+  }
+
+  if (value < -32768.0F) {
+    return -32768;
+  }
+
+  return static_cast<int16_t>(value);
 }
 
 bool readMpu6050(RawMpuData &data) {
-  Wire.beginTransmission(MPU6050_ADDRESS);
-  Wire.write(MPU6050_ACCEL_XOUT_H);
-
-  if (Wire.endTransmission(false) != 0) {
-    return false;
-  }
-
-  if (Wire.requestFrom(MPU6050_ADDRESS, static_cast<uint8_t>(14), true) != 14) {
-    return false;
-  }
-
-  data.ax = readInt16();
-  data.ay = readInt16();
-  data.az = readInt16();
-  Wire.read();
-  Wire.read();
-  data.gx = readInt16();
-  data.gy = readInt16();
-  data.gz = readInt16();
+  mpu.update();
+  data.ax = clampToInt16(mpu.getAccX() * ACCEL_RAW_SCALE);
+  data.ay = clampToInt16(mpu.getAccY() * ACCEL_RAW_SCALE);
+  data.az = clampToInt16(mpu.getAccZ() * ACCEL_RAW_SCALE);
+  data.gx = clampToInt16(mpu.getGyroX() * GYRO_RAW_SCALE);
+  data.gy = clampToInt16(mpu.getGyroY() * GYRO_RAW_SCALE);
+  data.gz = clampToInt16(mpu.getGyroZ() * GYRO_RAW_SCALE);
 
   return true;
 }
@@ -88,11 +85,20 @@ void notifyRawMpuData(const RawMpuData &data) {
   rawCharacteristic->notify();
 }
 
-bool wakeMpu6050() {
-  Wire.beginTransmission(MPU6050_ADDRESS);
-  Wire.write(MPU6050_PWR_MGMT_1);
-  Wire.write(0);
-  return Wire.endTransmission(true) == 0;
+bool initializeMpu6050() {
+  const byte status = mpu.begin();
+
+  if (status != 0) {
+    Serial.print("MPU6050 initialization failed, status: ");
+    Serial.println(status);
+    return false;
+  }
+
+  Serial.println("Keep MPU6050 flat and still. Calibration starts in 2 seconds...");
+  delay(2000);
+  mpu.calcOffsets(true, true);
+  Serial.println("MPU6050 calibration complete");
+  return true;
 }
 
 void setupBle() {
@@ -118,10 +124,11 @@ void setupBle() {
 
 void setup() {
   Serial.begin(115200);
-  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN);
+  Wire.begin(I2C_SDA_PIN, I2C_SCL_PIN, I2C_CLOCK_HZ);
+  mpuReady = initializeMpu6050();
 
-  if (!wakeMpu6050()) {
-    Serial.println("MPU6050 not detected; check power and I2C wiring");
+  if (!mpuReady) {
+    Serial.println("Check MPU6050 power and I2C wiring, then restart the ESP32");
   }
 
   setupBle();
@@ -131,7 +138,7 @@ void setup() {
 void loop() {
   RawMpuData data;
 
-  if (deviceConnected && rawCharacteristic != nullptr && readMpu6050(data)) {
+  if (mpuReady && deviceConnected && rawCharacteristic != nullptr && readMpu6050(data)) {
     notifyRawMpuData(data);
   }
 

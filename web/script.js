@@ -42,11 +42,11 @@ const sliderOutputs = new Map(
 const scene = new THREE.Scene();
 const sensorRotation = {
   targetPitch: 0,
-  targetRoll: 0,
+  targetYaw: 0,
   pitch: 0,
-  roll: 0,
+  yaw: 0,
   pitchCenter: 0,
-  rollCenter: 0,
+  yawCenter: 0,
 };
 const manualRotation = {
   x: -0.16,
@@ -457,9 +457,9 @@ function parseRawMpuPayload(value) {
 
 function rawMpuToRotation({ ax, ay, az }) {
   const pitch = Math.atan2(-ax, Math.sqrt(ay * ay + az * az));
-  const roll = Math.atan2(ay, az);
+  const yaw = Math.atan2(ay, az);
 
-  return { pitch, roll };
+  return { pitch, yaw };
 }
 
 function clampSensorRotation(value) {
@@ -475,14 +475,14 @@ function handleMpuNotification(event) {
 
   const rotation = rawMpuToRotation(rawData);
   sensorRotation.targetPitch = clampSensorRotation(rotation.pitch - sensorRotation.pitchCenter);
-  sensorRotation.targetRoll = clampSensorRotation(rotation.roll - sensorRotation.rollCenter);
+  sensorRotation.targetYaw = clampSensorRotation(rotation.yaw - sensorRotation.yawCenter);
 }
 
 function centerSensor() {
   sensorRotation.pitchCenter += sensorRotation.targetPitch;
-  sensorRotation.rollCenter += sensorRotation.targetRoll;
+  sensorRotation.yawCenter += sensorRotation.targetYaw;
   sensorRotation.targetPitch = 0;
-  sensorRotation.targetRoll = 0;
+  sensorRotation.targetYaw = 0;
   setSensorStatus("Centered");
 }
 
@@ -621,13 +621,13 @@ function updateAnimatedGemTextures(time) {
 
 function animate(time) {
   sensorRotation.pitch += (sensorRotation.targetPitch - sensorRotation.pitch) * SENSOR_SMOOTHING;
-  sensorRotation.roll += (sensorRotation.targetRoll - sensorRotation.roll) * SENSOR_SMOOTHING;
+  sensorRotation.yaw += (sensorRotation.targetYaw - sensorRotation.yaw) * SENSOR_SMOOTHING;
 
   updateAnimatedGemTextures(time);
 
   globeGroup.rotation.x = manualRotation.x + sensorRotation.pitch;
-  globeGroup.rotation.y = manualRotation.y;
-  globeGroup.rotation.z = manualRotation.z - sensorRotation.roll;
+  globeGroup.rotation.y = manualRotation.y + sensorRotation.yaw;
+  globeGroup.rotation.z = manualRotation.z;
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
 }

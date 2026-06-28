@@ -27,6 +27,9 @@ Open `http://127.0.0.1:5500` and choose **Connect Sensor**.
 
 The firmware entry point is `firmware/src/main.cpp`. It is written for an
 ESP32 with an MPU6050 connected through I2C on SDA 21 and SCL 22.
+It uses the `MPU6050_light` library and calibrates the sensor at startup.
+Keep the sensor flat and still until the serial monitor reports
+`MPU6050 calibration complete`.
 
 The included `platformio.ini` targets a standard ESP32 development board
 (`esp32dev`) with the Arduino framework. From the repository root:
