@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rotating Globe</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <main class="globe-stage" aria-label="Slowly rotating 3D globe">
+      <canvas id="globeCanvas"></canvas>
+      <section class="controls" aria-label="Globe controls">
+        <label>
+          <span class="control-heading">
+            <span>Globe size</span>
+            <output for="globeSize" id="globeSizeValue">65</output>
+          </span>
+          <input id="globeSize" type="range" min="0" max="1000" value="65" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Aura thickness</span>
+            <output for="auraThickness" id="auraThicknessValue">9</output>
+          </span>
+          <input id="auraThickness" type="range" min="0" max="1000" value="9" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Aura gap</span>
+            <output for="auraGap" id="auraGapValue">0</output>
+          </span>
+          <input id="auraGap" type="range" min="0" max="1000" value="0" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Aura shine</span>
+            <output for="auraShine" id="auraShineValue">320</output>
+          </span>
+          <input id="auraShine" type="range" min="0" max="1000" value="320" />
+        </label>
+        <div class="control-group-label">Rick roll America</div>
+        <label>
+          <span class="control-heading">
+            <span>Latitude</span>
+            <output for="americaGemLat" id="americaGemLatValue">39</output>
+          </span>
+          <input id="americaGemLat" type="range" min="-90" max="1000" value="39" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Longitude</span>
+            <output for="americaGemLon" id="americaGemLonValue">-98</output>
+          </span>
+          <input id="americaGemLon" type="range" min="-180" max="1000" value="-98" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Size</span>
+            <output for="americaGemSize" id="americaGemSizeValue">100</output>
+          </span>
+          <input id="americaGemSize" type="range" min="40" max="1000" value="100" />
+        </label>
+        <div class="control-group-label">Cat coco China</div>
+        <label>
+          <span class="control-heading">
+            <span>Latitude</span>
+            <output for="chinaGemLat" id="chinaGemLatValue">35</output>
+          </span>
+          <input id="chinaGemLat" type="range" min="-90" max="1000" value="35" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Longitude</span>
+            <output for="chinaGemLon" id="chinaGemLonValue">103</output>
+          </span>
+          <input id="chinaGemLon" type="range" min="-180" max="1000" value="103" />
+        </label>
+        <label>
+          <span class="control-heading">
+            <span>Size</span>
+            <output for="chinaGemSize" id="chinaGemSizeValue">100</output>
+          </span>
+          <input id="chinaGemSize" type="range" min="40" max="1000" value="100" />
+        </label>
+        <div class="control-actions">
+          <button id="connectSensor" type="button">Connect Sensor</button>
+          <button id="centerSensor" type="button">Center</button>
+          <button id="saveSettings" type="button">Save</button>
+          <span id="saveStatus" role="status" aria-live="polite"></span>
+        </div>
+      </section>
+    </main>
+    <script type="module" src="script.js"></script>
+  </body>
+</html>
